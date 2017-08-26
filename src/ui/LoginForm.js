@@ -64,7 +64,7 @@ class LoginForm extends Component {
                         }
                     });
                 }
-            })
+            }).catch(err => console.log('Error ', err));
 
         this.refs.username.value = '';
         this.refs.email.value = '';
@@ -100,7 +100,7 @@ class LoginForm extends Component {
                 if (responseJson.success) {
                     localStorage.setItem('DD101_TOKEN', responseJson.token);
                 }
-            })
+            }).catch(err => console.log('Error ', err));
     }
 
     handleEmailChange(e) {
