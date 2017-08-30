@@ -17,11 +17,49 @@ class LoginForm extends Component {
             signUp: {
                 success: undefined,
                 message: undefined
-            }
+            },
+            logged: false
         }
     }
 
     static displayName = 'ui-LoginForm'
+
+    componentDidMount() {
+        this.verifytoken();
+    }
+
+    verifytoken() {
+        let url = 'http://localhost:3001/auth/verifytoken';
+        let token = localStorage.getItem('DD101_TOKEN');
+        if(!token){
+            return
+        }
+
+        fetch(url, {
+            method: "GET",
+            body: undefined,
+            headers: {
+                "Content-Type": "application/json",
+                "authorization": `Bearer ${token}`
+            }
+        }).then(response => response.json())
+            .then(responseJson => {
+                this.setState({
+                    logged: responseJson.success
+                })
+            }).catch(err => console.log('Error ', err));
+    }
+
+    showAuthorizedArea() {
+        if (this.state.logged) {
+            return (
+                <div>
+                    <button type="button" className="btn btn-primary btn-block" data-toggle="modal" data-target="#authenticatedModal" data-whatever="@mdo" >Call Authenticated only API</button>
+                    <small id="emailHelp" className="form-text text-muted">Only registered and logged users can call and see the list. Plese click the button above to call the API.</small>
+                </div>
+            );
+        }
+    }
 
     /*
     Register Form area
@@ -36,7 +74,7 @@ class LoginForm extends Component {
                 password: this.refs.password.value
             }
         };
-        console.log(JSON.stringify(dataToSend))
+
 
         let url = 'http://localhost:3001/users/register';
 
@@ -99,6 +137,9 @@ class LoginForm extends Component {
             .then(responseJson => {
                 if (responseJson.success) {
                     localStorage.setItem('DD101_TOKEN', responseJson.token);
+                    this.setState({
+                        logged: true
+                    })
                 }
             }).catch(err => console.log('Error ', err));
     }
@@ -243,8 +284,9 @@ class LoginForm extends Component {
                                     <button type="submit" className="btn btn-primary btn-block">Login</button>
                                     <small id="emailHelp" className="form-text text-muted">If you are not registered. Plese <a href="#" data-toggle="modal" data-target="#signupModel" data-whatever="@mdo" >Signup</a></small>
                                     <br />
-                                    <button type="button" className="btn btn-primary btn-block" data-toggle="modal" data-target="#authenticatedModal" data-whatever="@mdo" >Call Authenticated only API</button>
-                                    <small id="emailHelp" className="form-text text-muted">Only registered and logged users can call and see the list. Plese click the button above to call the API.</small>
+                                    {
+                                        this.showAuthorizedArea()
+                                    }
                                 </form>
 
 
