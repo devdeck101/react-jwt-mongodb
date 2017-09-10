@@ -18,7 +18,9 @@ class LoginForm extends Component {
                 success: undefined,
                 message: undefined
             },
-            logged: false
+            logged: false,
+            users: undefined,
+            error: undefined
         }
     }
 
@@ -31,7 +33,11 @@ class LoginForm extends Component {
     verifytoken() {
         let url = 'http://localhost:3001/auth/verifytoken';
         let token = localStorage.getItem('DD101_TOKEN');
-        if(!token){
+
+        if (!token) {
+            this.setState({
+                error: 'No token defined. Please Login.'
+            })
             return
         }
 
@@ -44,11 +50,46 @@ class LoginForm extends Component {
             }
         }).then(response => response.json())
             .then(responseJson => {
-                this.setState({
-                    logged: responseJson.success
-                })
-            }).catch(err => console.log('Error ', err));
+                if (responseJson.success) {
+                    this.setState({
+                        logged: responseJson.success,
+                        error: undefined
+                    })
+                    this.loadUsers()
+                } else {
+                    this.setState({
+                        error: responseJson.error.message
+                    })
+                }
+            }).catch(err => this.setState({ error: err }));
     }
+
+    loadUsers() {
+        let url = 'http://localhost:3001/users/listusers';
+        let token = localStorage.getItem('DD101_TOKEN');
+        if (!token) {
+            this.setState({
+                error: 'No token defined. Please Login.'
+            })
+            return
+        }
+
+        fetch(url, {
+            method: "POST",
+            body: undefined,
+            headers: {
+                "Content-Type": "application/json",
+                "authorization": `Bearer ${token}`
+            }
+        }).then(response => response.json())
+            .then(responseJson => {
+                this.setState({
+                    users: responseJson.data,
+                    error: undefined
+                })
+            }).catch(err => this.setState({ error: err }));
+    }
+
 
     showAuthorizedArea() {
         if (this.state.logged) {
@@ -138,10 +179,14 @@ class LoginForm extends Component {
                 if (responseJson.success) {
                     localStorage.setItem('DD101_TOKEN', responseJson.token);
                     this.setState({
-                        logged: true
+                        logged: true,
+                        error: undefined
                     })
+                    this.loadUsers()
                 }
-            }).catch(err => console.log('Error ', err));
+            }).catch(err => this.setState({ error: err }));
+
+            e.target.reset()
     }
 
     handleEmailChange(e) {
@@ -219,30 +264,27 @@ class LoginForm extends Component {
                             <div className="modal-body">
 
                                 <div className="list-group">
-                                    <a href="#" className="list-group-item list-group-item-action flex-column align-items-start">
-                                        <div className="d-flex w-100 justify-content-between">
-                                            <h5 className="mb-1">Name: Developer Deck 101</h5>
-                                            <small>01/09/2017</small>
-                                        </div>
-                                        <p className="mb-1">E-mail: devdeck101@gmail.com</p>
-                                        <small>Password (Should never do that)</small>
-                                    </a>
-                                    <a href="#" className="list-group-item list-group-item-action flex-column align-items-start">
-                                        <div className="d-flex w-100 justify-content-between">
-                                            <h5 className="mb-1">Name: Developer Deck 101</h5>
-                                            <small>01/09/2017</small>
-                                        </div>
-                                        <p className="mb-1">E-mail: devdeck101@gmail.com</p>
-                                        <small>Password (Should never do that)</small>
-                                    </a>
-                                    <a href="#" className="list-group-item list-group-item-action flex-column align-items-start">
-                                        <div className="d-flex w-100 justify-content-between">
-                                            <h5 className="mb-1">Name: Developer Deck 101</h5>
-                                            <small>01/09/2017</small>
-                                        </div>
-                                        <p className="mb-1">E-mail: devdeck101@gmail.com</p>
-                                        <small>Password (Should never do that)</small>
-                                    </a>
+
+                                    {
+                                        /**
+                                         * List the users when authenticated
+                                         */
+                                        (this.state.users !== undefined && this.error === undefined) ? (
+                                            this.state.users.map((user) => (
+                                                <a key={user.email} href="#" className="list-group-item list-group-item-action flex-column align-items-start">
+                                                    <div className="d-flex w-100 justify-content-between">
+                                                        <h5 className="mb-1">Name: {user.name}</h5>
+                                                        <small>01/09/2017</small>
+                                                    </div>
+                                                    <p className="mb-1">E-mail: {user.email}</p>
+                                                    <small>Password (Should never do that)</small>
+                                                </a>
+                                            ))
+                                        ) : this.state.error
+                                    }
+
+
+
                                 </div>
 
                             </div>
